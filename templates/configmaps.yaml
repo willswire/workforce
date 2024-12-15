@@ -1,0 +1,38 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: worker-config
+data:
+  config.capnp: |
+    using Workerd = import "/workerd/workerd.capnp";
+
+    const default :Workerd.Worker = (
+      serviceWorkerScript = embed "worker.js",
+      compatibilityDate = "2023-02-28",
+    );
+
+    const config :Workerd.Config = (
+      services = [ (name = "main", worker = .default) ],
+      sockets = [
+        ( name = "http",
+          address = "*:{{ .Values.service.port }}",
+          http = (),
+          service = "main" )
+      ]
+    );
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: worker-js
+data:
+  worker.js: |
+    addEventListener('fetch', event => {
+      event.respondWith(handle(event.request));
+    });
+
+    async function handle(request) {
+      return new Response("Hello World!");
+    }

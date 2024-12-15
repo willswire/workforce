@@ -1,0 +1,9 @@
+build-package:
+    melange build \
+        --arch aarch64
+
+build-container:
+    apko build apko.yaml workerd:1.20241214.0 workerd.tar \
+        --ignore-signatures \
+        --sbom=false \
+        --repository-append packages/

@@ -1,0 +1,6 @@
+apiVersion: v2
+name: workforce
+description: self-host applications designed for Cloudflare Workers
+type: application
+version: 0.1.0
+appVersion: "1.20241214.0"
