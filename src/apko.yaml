@@ -1,0 +1,15 @@
+contents:
+  keyring:
+    - https://packages.wolfi.dev/os/wolfi-signing.rsa.pub
+    - ./local-melange.rsa.pub
+  repositories:
+    - "@local packages"
+    - https://packages.wolfi.dev/os
+  packages:
+    - workerd@local
+
+entrypoint:
+  command: "workerd"
+
+archs:
+  - aarch64

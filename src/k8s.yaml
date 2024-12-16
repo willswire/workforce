@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: workerd-deployment
+  labels:
+    app: workerd
+spec:
+  replicas: 5
+  selector:
+    matchLabels:
+      app: workerd
+  template:
+    metadata:
+      labels:
+        app: workerd
+    spec:
+      containers:
+        - name: workerd
+          image: workerd:latest-arm64
+          args:
+            - "--verbose"
+            - "serve"
+            - "/app/config.capnp"
+          ports:
+            - containerPort: 8080
+          volumeMounts:
+            - name: app-volume
+              mountPath: /app
+          stdin: true
+          tty: true
+      volumes:
+        - name: app-volume
+          hostPath:
+            path: /Users/willwalker/Developer/github.com/willswire/uds-package-workerd/src/durable-objects-chat
+            type: Directory
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: workerd-service
+spec:
+  selector:
+    app: workerd
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080
+  type: ClusterIP
