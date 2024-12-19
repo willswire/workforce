@@ -1,2 +1,2 @@
-# uds-package-workerd
-a UDS package for Cloudflare's workerd
+# workforce
+a Helm chart for Cloudflare Workers
