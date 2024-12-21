@@ -1,15 +1,13 @@
-replicaCount: 1
+workerd:
+  replicaCount: 1
+  image:
+    repository: ghcr.io/willswire/workforce/workerd
+    pullPolicy: IfNotPresent
+    tag: "1.20241214.0"
+  service:
+    type: ClusterIP
+    port: 8080
+  script: null
 
-image:
-  repository: ghcr.io/willswire/workforce/workerd
-  pullPolicy: IfNotPresent
-  tag: "1.20241214.0"
-
-service:
-  type: ClusterIP
-  port: 8080
-
-# Configuration for custom scripts
-workerScript:
-  useCustom: false # Set to true if using a custom ConfigMap for the JS file
-  customConfigMapName: "" # Name of the custom ConfigMap if useCustom is true
+cloudflared:
+  hostname: example.com
