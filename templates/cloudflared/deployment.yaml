@@ -1,3 +1,4 @@
+{{- if .Values.cloudflared.enabled }}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -17,12 +18,15 @@ spec:
     spec:
       containers:
       - name: cloudflared
-        image: cloudflare/cloudflared:2022.3.0
+        image: "{{ .Values.cloudflared.image.repository }}:{{ .Values.cloudflared.image.tag }}"
+        command:
+        - cloudflared
+        - tunnel
         args:
-        - "tunnel"
-        - "--config"
-        - "/etc/cloudflared/config/config.yaml"
-        - "run"
+        - "--metrics"
+        - "0.0.0.0:2000"
+        - "--url"
+        - "http://{{ .Release.Name }}-workerd:{{ .Values.workerd.service.port }}"
         livenessProbe:
           httpGet:
             path: /ready
@@ -30,20 +34,4 @@ spec:
           failureThreshold: 1
           initialDelaySeconds: 10
           periodSeconds: 10
-        volumeMounts:
-        - name: config
-          mountPath: /etc/cloudflared/config
-          readOnly: true
-        - name: creds
-          mountPath: /etc/cloudflared/creds
-          readOnly: true
-      volumes:
-      - name: creds
-        secret:
-          secretName: tunnel-credentials
-      - name: cloudflared-config
-        configMap:
-          name: cloudflared-config
-          items:
-          - key: config.yaml
-            path: config.yaml
+{{- end }}

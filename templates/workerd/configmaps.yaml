@@ -16,7 +16,7 @@ data:
       services = [ (name = "main", worker = .default) ],
       sockets = [
         ( name = "http",
-          address = "*:{{ .Values.service.port }}",
+          address = "*:{{ .Values.workerd.service.port }}",
           http = (),
           service = "main" )
       ]
@@ -29,14 +29,4 @@ metadata:
   name: workerd-script
 data:
   worker.js: |
-    {{- if not .Values.workerd.script }}
-    addEventListener('fetch', event => {
-      event.respondWith(handle(event.request));
-    });
-
-    async function handle(request) {
-      return new Response("Hello World!");
-    }
-    {{- else }}
     {{ .Values.workerd.script | nindent 4 }}
-    {{- end }}

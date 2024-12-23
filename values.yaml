@@ -1,13 +1,23 @@
 workerd:
   replicaCount: 1
   image:
-    repository: ghcr.io/willswire/workforce/workerd
-    pullPolicy: IfNotPresent
+    repository: "ghcr.io/willswire/workforce/workerd"
+    pullPolicy: "IfNotPresent"
     tag: "1.20241214.0"
   service:
-    type: ClusterIP
+    type: "ClusterIP"
     port: 8080
-  script: null
+  script: |
+    addEventListener('fetch', event => {
+      event.respondWith(handle(event.request));
+    });
+
+    async function handle(request) {
+      return new Response("Hello World!");
+    }
 
 cloudflared:
-  hostname: example.com
+  enabled: true
+  image:
+    repository: "cloudflare/cloudflared"
+    tag: "2024.12.2"
