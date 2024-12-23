@@ -8,6 +8,9 @@ package:
   dependencies:
     runtime:
       - glibc-dev
+  target-architecture:
+    - aarch64
+    - x86_64
 
 environment:
   contents:
@@ -17,47 +20,23 @@ environment:
       - https://packages.wolfi.dev/os
     packages:
       - bash
-      - bazelisk
-      - bazelisk-default
-      - binutils
-      - build-base
       - busybox
-      - clang-17
-      - clang-17-dev
-      - gcc-6
-      - gnutar
-      - libstdc++-6
-      - libstdc++-6-dev
-      - libtool
-      - llvm-libcxx-17
-      - llvm-libcxx-17-dev
-      - llvm-libcxxabi-17
-      - llvm-libunwind-17
-      - llvm-lld-17
-      - llvm17
-      - llvm17-dev
-      - posix-libc-utils
-      - python3-dev
-      - tcl
+      - ca-certificates
+      - wget
+      - wolfi-base
 
 pipeline:
-  - uses: git-checkout
-    with:
-      repository: https://github.com/cloudflare/workerd
-      tag: v${{package.version}}
-      expected-commit: acdbbecb00aff739e3091bd8f6cc8c4d0ebe8167
-
-  - name: build
+  - name: get
     runs: |
-      bazel build \
-       --config=thin-lto \
-       --linkopt='-lc++' --linkopt='-lm' \
-       --host_linkopt='-lc++' --host_linkopt='-lm' \
-       //src/workerd/server:workerd
+      if [ "${{build.arch}}" = "x86_64" ]; then
+        wget -O workerd.gz https://github.com/cloudflare/workerd/releases/download/v${{package.version}}/workerd-linux-64.gz
+      elif [ "${{build.arch}}" = "aarch64" ]; then
+        wget -O workerd.gz https://github.com/cloudflare/workerd/releases/download/v${{package.version}}/workerd-linux-arm64.gz
+      fi
 
   - name: install
     runs: |
-      mkdir -p ${{targets.destdir}}/usr/bin
-      mv bazel-bin/src/workerd/server/workerd ${{targets.destdir}}/usr/bin/workerd
+      gunzip -c workerd.gz > workerd
+      install -Dm755 workerd ${{targets.destdir}}/usr/bin/workerd
 
   - uses: strip
