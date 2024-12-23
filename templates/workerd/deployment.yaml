@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-workerd
+  labels:
+    app: {{ .Release.Name }}-workerd
+spec:
+  replicas: {{ .Values.workerd.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-workerd
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-workerd
+    spec:
+      containers:
+        - name: workerd
+          image: "{{ .Values.workerd.image.repository }}:{{ .Values.workerd.image.tag }}"
+          ports:
+            - containerPort: {{ .Values.workerd.service.port }}
+          args:
+            - "--verbose"
+            - "serve"
+            - "/app/config.capnp"
+          imagePullPolicy: {{ .Values.workerd.image.pullPolicy }}
+          volumeMounts:
+            - name: workerd-config
+              mountPath: /app/config.capnp
+              subPath: config.capnp
+            - name: workerd-script
+              mountPath: /app/worker.js
+              subPath: worker.js
+      volumes:
+        - name: workerd-config
+          configMap:
+            name: workerd-config
+        - name: workerd-script
+          configMap:
+            name: workerd-script

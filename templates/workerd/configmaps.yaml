@@ -2,7 +2,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: worker-config
+  name: workerd-config
 data:
   config.capnp: |
     using Workerd = import "/workerd/workerd.capnp";
@@ -16,7 +16,7 @@ data:
       services = [ (name = "main", worker = .default) ],
       sockets = [
         ( name = "http",
-          address = "*:{{ .Values.service.port }}",
+          address = "*:{{ .Values.workerd.service.port }}",
           http = (),
           service = "main" )
       ]
@@ -26,13 +26,7 @@ data:
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: worker-js
+  name: workerd-script
 data:
   worker.js: |
-    addEventListener('fetch', event => {
-      event.respondWith(handle(event.request));
-    });
-
-    async function handle(request) {
-      return new Response("Hello World!");
-    }
+    {{ .Values.workerd.script | nindent 4 }}

@@ -1,0 +1,37 @@
+{{- if .Values.cloudflared.enabled }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-cloudflared
+  labels:
+    app: {{ .Release.Name }}-cloudflared
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-cloudflared
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-cloudflared
+    spec:
+      containers:
+      - name: cloudflared
+        image: "{{ .Values.cloudflared.image.repository }}:{{ .Values.cloudflared.image.tag }}"
+        command:
+        - cloudflared
+        - tunnel
+        args:
+        - "--metrics"
+        - "0.0.0.0:2000"
+        - "--url"
+        - "http://{{ .Release.Name }}-workerd:{{ .Values.workerd.service.port }}"
+        livenessProbe:
+          httpGet:
+            path: /ready
+            port: 2000
+          failureThreshold: 1
+          initialDelaySeconds: 10
+          periodSeconds: 10
+{{- end }}
