@@ -2,7 +2,7 @@ workerd:
   replicaCount: 1
   image:
     repository: "ghcr.io/willswire/workforce/workerd"
-    pullPolicy: "IfNotPresent"
+    pullPolicy: "Always"
     tag: "1.20241214.0"
   service:
     type: "ClusterIP"

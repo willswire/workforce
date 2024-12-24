@@ -19,6 +19,8 @@ spec:
           image: "{{ .Values.workerd.image.repository }}:{{ .Values.workerd.image.tag }}"
           ports:
             - containerPort: {{ .Values.workerd.service.port }}
+          command:
+            - /usr/bin/workerd
           args:
             - "--verbose"
             - "serve"
