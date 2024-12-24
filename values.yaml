@@ -1,7 +1,7 @@
 workerd:
   replicaCount: 1
   image:
-    repository: "ghcr.io/willswire/workforce/workerd"
+    repository: "ghcr.io/willswire/union/workerd"
     pullPolicy: "Always"
     tag: "1.20241214.0"
   service:
