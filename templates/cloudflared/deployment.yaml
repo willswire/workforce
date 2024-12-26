@@ -17,21 +17,71 @@ spec:
         app: {{ .Release.Name }}-cloudflared
     spec:
       containers:
-      - name: cloudflared
-        image: "{{ .Values.cloudflared.image.repository }}:{{ .Values.cloudflared.image.tag }}"
-        command:
-        - cloudflared
-        - tunnel
-        args:
-        - "--metrics"
-        - "0.0.0.0:2000"
-        - "--url"
-        - "http://{{ .Release.Name }}-workerd:{{ .Values.workerd.service.port }}"
-        livenessProbe:
-          httpGet:
-            path: /ready
-            port: 2000
-          failureThreshold: 1
-          initialDelaySeconds: 10
-          periodSeconds: 10
+        - name: cloudflared
+          image: "{{ .Values.cloudflared.image.repository }}:{{ .Values.cloudflared.image.tag }}"
+          {{- if .Values.cloudflared.userTunnel.enabled }}
+          command:
+            - cloudflared
+            - tunnel
+            - --origincert
+            - /etc/cloudflared/cert.pem
+            - --credentials-file
+            - /etc/cloudflared/tunnel.json
+            - "--url"
+            - "http://{{ .Release.Name }}-workerd:{{ .Values.workerd.service.port }}"
+            - run
+            - {{.Values.cloudflared.userTunnel.tunnelName}}
+          volumeMounts:
+            - name: tunnel-config
+              mountPath: /etc/cloudflared
+              readOnly: true
+            - name: origin-cert
+              mountPath: /etc/cloudflared
+              readOnly: true
+          {{- else }}
+          command:
+            - cloudflared
+            - tunnel
+          args:
+            - "--metrics"
+            - "0.0.0.0:2000"
+            - "--url"
+            - "http://{{ .Release.Name }}-workerd:{{ .Values.workerd.service.port }}"
+          {{- end }}
+          livenessProbe:
+            httpGet:
+              path: /ready
+              port: 2000
+            failureThreshold: 1
+            initialDelaySeconds: 10
+            periodSeconds: 10
+      {{- if .Values.cloudflared.userTunnel.enabled }}
+      volumes:
+        - name: tunnel-config
+          secret:
+            secretName: {{ .Release.Name }}-cloudflared-config
+        - name: origin-cert
+          secret:
+            secretName: {{ .Release.Name }}-cloudflared-cert
+      {{- end }}
+{{- if .Values.cloudflared.userTunnel.enabled }}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ .Release.Name }}-cloudflared-config
+type: Opaque
+stringData:
+  tunnel.json: |-
+    {{ .Values.cloudflared.userTunnel.credentialsFileContent | nindent 4 }}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ .Release.Name }}-cloudflared-cert
+type: Opaque
+stringData:
+  cert.pem: |-
+    {{ .Values.cloudflared.userTunnel.certFileContent | nindent 4 }}
+{{- end }}
 {{- end }}
