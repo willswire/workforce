@@ -17,21 +17,51 @@ spec:
         app: {{ .Release.Name }}-cloudflared
     spec:
       containers:
-      - name: cloudflared
-        image: "{{ .Values.cloudflared.image.repository }}:{{ .Values.cloudflared.image.tag }}"
-        command:
-        - cloudflared
-        - tunnel
-        args:
-        - "--metrics"
-        - "0.0.0.0:2000"
-        - "--url"
-        - "http://{{ .Release.Name }}-workerd:{{ .Values.workerd.service.port }}"
-        livenessProbe:
-          httpGet:
-            path: /ready
-            port: 2000
-          failureThreshold: 1
-          initialDelaySeconds: 10
-          periodSeconds: 10
+        - name: cloudflared
+          image: "{{ .Values.cloudflared.image.repository }}:{{ .Values.cloudflared.image.tag }}"
+          {{- if .Values.cloudflared.userTunnel.enabled }}
+          args:
+            - tunnel
+            # Points cloudflared to the config file, which configures what
+            # cloudflared will actually do. This file is created by a ConfigMap.
+            - --config
+            - /etc/cloudflared/config/config.yaml
+            - run
+          volumeMounts:
+            - name: config
+              mountPath: /etc/cloudflared/config
+              readOnly: true
+            # Each tunnel has an associated "credentials file" which authorizes machines
+            # to run the tunnel. cloudflared will read this file from its local filesystem,
+            # and it'll be stored in a k8s secret.
+            - name: creds
+              mountPath: /etc/cloudflared/creds
+              readOnly: true
+          {{- else }}
+          args:
+            - tunnel
+            - "--metrics"
+            - "0.0.0.0:2000"
+            - "--url"
+            - "http://{{ .Release.Name }}-workerd:{{ .Values.workerd.service.port }}"
+          {{- end }}
+          livenessProbe:
+            httpGet:
+              path: /ready
+              port: 2000
+            failureThreshold: 1
+            initialDelaySeconds: 10
+            periodSeconds: 10
+      {{- if .Values.cloudflared.userTunnel.enabled }}
+      volumes:
+        - name: creds
+          secret:
+            secretName: {{ .Values.cloudflared.secretName | default (include "cloudflare-tunnel.fullname" .) }}
+        - name: config
+          configMap:
+            name: {{ include "cloudflare-tunnel.fullname" . }}
+            items:
+              - key: config.yaml
+                path: config.yaml
+      {{- end }}
 {{- end }}
