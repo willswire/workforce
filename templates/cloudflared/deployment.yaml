@@ -20,29 +20,26 @@ spec:
         - name: cloudflared
           image: "{{ .Values.cloudflared.image.repository }}:{{ .Values.cloudflared.image.tag }}"
           {{- if .Values.cloudflared.userTunnel.enabled }}
-          command:
-            - cloudflared
+          args:
             - tunnel
-            - --origincert
-            - /etc/cloudflared/cert.pem
-            - --credentials-file
-            - /etc/cloudflared/tunnel.json
-            - "--url"
-            - "http://{{ .Release.Name }}-workerd:{{ .Values.workerd.service.port }}"
+            # Points cloudflared to the config file, which configures what
+            # cloudflared will actually do. This file is created by a ConfigMap.
+            - --config
+            - /etc/cloudflared/config/config.yaml
             - run
-            - {{.Values.cloudflared.userTunnel.tunnelName}}
           volumeMounts:
-            - name: tunnel-config
-              mountPath: /etc/cloudflared
+            - name: config
+              mountPath: /etc/cloudflared/config
               readOnly: true
-            - name: origin-cert
-              mountPath: /etc/cloudflared
+            # Each tunnel has an associated "credentials file" which authorizes machines
+            # to run the tunnel. cloudflared will read this file from its local filesystem,
+            # and it'll be stored in a k8s secret.
+            - name: creds
+              mountPath: /etc/cloudflared/creds
               readOnly: true
           {{- else }}
-          command:
-            - cloudflared
-            - tunnel
           args:
+            - tunnel
             - "--metrics"
             - "0.0.0.0:2000"
             - "--url"
@@ -57,31 +54,14 @@ spec:
             periodSeconds: 10
       {{- if .Values.cloudflared.userTunnel.enabled }}
       volumes:
-        - name: tunnel-config
+        - name: creds
           secret:
-            secretName: {{ .Release.Name }}-cloudflared-config
-        - name: origin-cert
-          secret:
-            secretName: {{ .Release.Name }}-cloudflared-cert
+            secretName: {{ .Values.cloudflared.secretName | default (include "cloudflare-tunnel.fullname" .) }}
+        - name: config
+          configMap:
+            name: {{ include "cloudflare-tunnel.fullname" . }}
+            items:
+              - key: config.yaml
+                path: config.yaml
       {{- end }}
-{{- if .Values.cloudflared.userTunnel.enabled }}
----
-apiVersion: v1
-kind: Secret
-metadata:
-  name: {{ .Release.Name }}-cloudflared-config
-type: Opaque
-stringData:
-  tunnel.json: |-
-    {{ .Values.cloudflared.userTunnel.credentialsFileContent | nindent 4 }}
----
-apiVersion: v1
-kind: Secret
-metadata:
-  name: {{ .Release.Name }}-cloudflared-cert
-type: Opaque
-stringData:
-  cert.pem: |-
-    {{ .Values.cloudflared.userTunnel.certFileContent | nindent 4 }}
-{{- end }}
 {{- end }}
