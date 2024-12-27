@@ -22,6 +22,7 @@ cloudflared:
     repository: "cloudflare/cloudflared"
     tag: "2024.12.2"
   userTunnel:
+    # Default to quick tunnel
     enabled: false  
     # Your Cloudflare account number.
     account: ""
