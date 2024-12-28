@@ -7,14 +7,13 @@ workerd:
   service:
     type: "ClusterIP"
     port: 8080
-  script: |
-    addEventListener('fetch', event => {
-      event.respondWith(handle(event.request));
-    });
-
-    async function handle(request) {
-      return new Response("Hello World!");
-    }
+  scriptConfig:
+    # Use ConfigMap or Secret
+    sourceType: "ConfigMap"
+    # Reference to existing ConfigMap/Secret containing the script
+    sourceName: "{{ .Release.Name }}-workerd-script"
+    # Key in the ConfigMap/Secret containing the script
+    sourceKey: "worker.js"
 
 cloudflared:
   enabled: true
@@ -23,7 +22,7 @@ cloudflared:
     tag: "2024.12.2"
   userTunnel:
     # Default to quick tunnel
-    enabled: false  
+    enabled: false
     # Your Cloudflare account number.
     account: ""
     # The name of the tunnel this instance will serve

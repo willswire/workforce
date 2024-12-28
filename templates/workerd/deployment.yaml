@@ -30,13 +30,16 @@ spec:
             - name: workerd-config
               mountPath: /app/config.capnp
               subPath: config.capnp
-            - name: workerd-script
-              mountPath: /app/worker.js
+            - name: worker-script
+              mountPath: /app/scripts/worker.js
               subPath: worker.js
       volumes:
         - name: workerd-config
           configMap:
-            name: workerd-config
-        - name: workerd-script
+            name: {{ .Release.Name }}-workerd-config
+        - name: worker-script
           configMap:
-            name: workerd-script
+            name: {{ .Release.Name }}-workerd-script
+            items:
+              - key: worker.js
+                path: worker.js
