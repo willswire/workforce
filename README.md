@@ -15,7 +15,35 @@ To deploy this project using Helm, ensure you have Helm installed and properly c
    cd union
    ```
 
-2. **Install the Helm Chart**
+2. **Configure Your Worker Script**
+
+   The worker script can be configured in two ways:
+
+   a. Using the default script in values.yaml:
+
+   ```yaml
+   workerd:
+     scriptConfig:
+       sourceType: "ConfigMap"
+       sourceName: "my-release-my-worker-script"
+       sourceKey: "worker.js"
+   ```
+
+   b. Using your own ConfigMap:
+
+   ```yaml
+   apiVersion: v1
+   kind: ConfigMap
+   metadata:
+     name: my-worker-script
+   data:
+     worker.js: |
+       addEventListener('fetch', event => {
+         event.respondWith(new Response("Hello from my worker!"));
+       });
+   ```
+
+3. **Install the Helm Chart**
 
    Use the following command to install the chart, replacing `union` with your desired release name and target namespace:
 
@@ -23,7 +51,7 @@ To deploy this project using Helm, ensure you have Helm installed and properly c
    helm install union --create-namespace --namespace union ./
    ```
 
-3. **Verify the Deployment**
+4. **Verify the Deployment**
 
    You can check the deployment status by running:
 
@@ -31,7 +59,7 @@ To deploy this project using Helm, ensure you have Helm installed and properly c
    kubectl get deployments -n union
    ```
 
-4. **Accessing the Service**
+5. **Accessing the Service**
 
    If Cloudflared is enabled, to retrieve the hostname for accessing your service, use:
 
